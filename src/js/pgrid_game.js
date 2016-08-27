@@ -28,12 +28,29 @@ var Game,
     /* Main game loop */
 
     gameLoop = function () {
-        var now = timestamp(),
-            timePassed = Math.min(1, now - module.time);
+        var now = timestamp(), x, y,
+            timePassed = Math.min(1, now - module.time),
+            grid, // remove me
+            tile; // remove me
 
-        //window.requestAnimationFrame(gameLoop);
+        window.requestAnimationFrame(gameLoop);
 
         // TODO: game logic
+
+        // TODO: remove me
+        grid = _gameState.levelState.getGrid();
+        // Rotation logic test
+        if (Math.floor(Math.random() * 10) === 0) {
+            tile = grid[Math.floor(Math.random() * grid.length)][Math.floor(Math.random() * grid[0].length)];
+            tile.rotateRight();
+            //console.log("rotate", tile.x, tile.y);
+        }
+
+        for (x = 0; x < grid.length; x += 1) {
+            for (y = 0; y < grid[0].length; y += 1) {
+                grid[x][y].update(0);
+            }
+        }
 
         // Render game
         _renderer.render(timePassed, _gameState);
@@ -53,7 +70,7 @@ var Game,
 
         // TODO: Remove
         _gameState.startLevel();
-        _gameState.levelState = new GameLevelState.LevelState(13, 11, true);
+        _gameState.levelState = new GameLevelState.LevelState(13, 11, false);
 
         // Reset FPS counter every second
         setInterval(updateFps, 1000);

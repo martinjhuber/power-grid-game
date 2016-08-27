@@ -9,7 +9,8 @@ var GameLevelState,
 (function (module) {
     "use strict";
 
-    var  _Tile;
+    var _Tile, _Consumer, _TileI, _TileL, _TileY, _TileX,
+        countConnectors, tileGenerator;
 
     module.LevelState = function (width, height, wrap) {
 
@@ -19,15 +20,16 @@ var GameLevelState,
 
         constructor = function () {
             var levelGenerator;
-
             levelGenerator = new module.LevelGenerator(width, height, wrap);
-
             grid = levelGenerator.generateTileGrid();
-
         };
 
         this.getGrid = function () {
             return grid;
+        };
+
+        this.isWrap = function () {
+            return wrap;
         };
 
         constructor();
@@ -237,7 +239,7 @@ var GameLevelState,
             for (x = 0; x < plan.length; x += 1) {
                 for (y = 0; y < plan[x].length; y += 1) {
 
-                    tileGrid[x][y] = new module.Tile(
+                    tileGrid[x][y] = tileGenerator(
                         x,
                         y,
                         plan[x][y].connectors,
@@ -265,50 +267,7 @@ var GameLevelState,
 
     // ----
 
-    module.TileType = {
-        PowerGenerator : "G",
-        Consumer : "C",
-        Line : "L"
-    };
-
-    module.Tile = function (x, y, connectors, isPowerGenerator) {
-
-        var constructor, determineType,
-            // variables:
-            type;
-
-
-        constructor = function () {
-            determineType();
-        };
-
-        determineType = function () {
-            var connectorCount = module.countConnectors(connectors);
-
-            if (isPowerGenerator) {
-                type = module.TileType.PowerGenerator;
-            } else if (connectorCount === 1) {
-                type = module.TileType.Consumer;
-            } else if (connectorCount === 0) {
-                console.error("Tile has no connectors:", x, y);
-            } else {
-                type = module.TileType.Line;
-            }
-        };
-
-        this.getType = function () {
-            return type;
-        };
-
-        this.getConnectors = function () {
-            return connectors;
-        };
-
-        constructor();
-    };
-
-
-    module.countConnectors = function (connectors) {
+    countConnectors = function (connectors) {
         var i, count = 0;
         for (i = 0; i < connectors.length; i += 1) {
             if (connectors[i]) {
@@ -318,5 +277,229 @@ var GameLevelState,
         return count;
     };
 
+    tileGenerator = function (x, y, connectors, isPowerPlant) {
+        var connectorCount = countConnectors(connectors),
+            Func;
+
+        switch (connectorCount) {
+        case 2:
+            if ((connectors[0] && connectors[2]) || (connectors[1] && connectors[3])) {
+                Func = module.TileI;
+            } else {
+                Func = module.TileL;
+            }
+            break;
+        case 1:
+            Func = module.Consumer;
+            break;
+        case 3:
+            Func = module.TileY;
+            break;
+        case 4:
+            Func = module.TileX;
+            break;
+        default:
+            console.error("Tile has no connectors:", x, y);
+            return null;
+        }
+
+        return new Func(x, y, connectors, isPowerPlant);
+    };
+
+    // ----
+
+    module.TileType = {
+        Consumer : "C",
+        I : "I",
+        L : "L",
+        Y : "Y",
+        X : "X"
+    };
+
+    module.TileStates = {
+        Connected : "C",
+        NotConnected : "N"
+    };
+
+    // ----
+
+    // Generic TILE
+    module.Tile = function (x, y, isPowerPlant) {
+        this.x = x;
+        this.y = y;
+        this.rotation = 0;
+        this.type = null;
+        this.isPowerPlant = isPowerPlant;
+
+        this.rotationGoal = 0;
+    };
+    _Tile = module.Tile.prototype;
+
+    _Tile.update = function (timePassed) {
+        if (this.rotation !== this.rotationGoal) {
+
+            // TODO: make rotation dependent on timePassed
+            if (this.rotation > this.rotationGoal) {
+                this.rotation -= 0.5;
+            } else {
+                this.rotation += 0.5;
+            }
+
+        }
+    };
+
+    _Tile.rotateLeft = function () {
+        this.rotationGoal -= 90;
+    };
+
+    _Tile.rotateRight = function () {
+        this.rotationGoal += 90;
+    };
+
+    _Tile.connectsWith = function () {
+        return [false, false, false, false];
+    };
+
+    // CONSUMER
+    // Just one connector
+    // Rotation = 0 if the connector is N
+    module.Consumer = function (x, y, connectors, isPowerPlant) {
+        var i;
+
+        module.Tile.call(this, x, y, isPowerPlant);
+        this.type = module.TileType.Consumer;
+
+        for (i = 0; i < connectors.length; i += 1) {
+            if (connectors[i]) {
+                break;
+            }
+        }
+        this.rotation = i * 90;
+        this.rotationGoal = this.rotation;
+
+        this.state = module.TileStates.NotConnected;
+    };
+    module.Consumer.prototype = Object.create(_Tile);
+    _Consumer = module.Consumer.prototype;
+
+    _Consumer.connectsWith = function () {
+        var connectors = [false, false, false, false];
+        if (this.rotation === 0) {
+            connectors[0] = true;
+        } else if (this.rotation === 90) {
+            connectors[1] = true;
+        } else if (this.rotation === 180) {
+            connectors[2] = true;
+        } else if (this.rotation === 270) {
+            connectors[3] = true;
+        }
+        return connectors;
+    };
+
+    // TileI
+    // Two connectors on opposite sides
+    // Rotation = 0 or 180 if the connector is N+S
+    module.TileI = function (x, y, connectors, isPowerPlant) {
+        module.Tile.call(this, x, y, isPowerPlant);
+        this.type = module.TileType.I;
+
+        if (connectors[1]) {
+            this.rotation = 90;
+        }
+        this.rotationGoal = this.rotation;
+    };
+    module.TileI.prototype = Object.create(_Tile);
+    _TileI = module.TileI.prototype;
+
+    _TileI.connectsWith = function () {
+        var connectors = [false, false, false, false];
+        if (this.rotation === 0 || this.rotation === 180) {
+            connectors[0] = connectors[2] = true;
+        } else if (this.rotation === 90) {
+            connectors[1] = connectors[3] = true;
+        }
+        return connectors;
+    };
+
+    // TileL
+    // Two connectors in an L shape
+    // Rotation = 0 if the connector is N+E
+    module.TileL = function (x, y, connectors, isPowerPlant) {
+        module.Tile.call(this, x, y, isPowerPlant);
+        this.type = module.TileType.L;
+
+        if (connectors[1] && connectors[2]) {
+            this.rotation = 90;
+        } else if (connectors[2] && connectors[3]) {
+            this.rotation = 180;
+        } else if (connectors[3] && connectors[0]) {
+            this.rotation = 270;
+        }
+        this.rotationGoal = this.rotation;
+    };
+    module.TileL.prototype = Object.create(_Tile);
+    _TileL = module.TileL.prototype;
+
+    _TileL.connectsWith = function () {
+        var connectors = [false, false, false, false];
+        connectors[0] = (this.rotation === 0 || this.rotation === 270);
+        connectors[1] = (this.rotation === 0 || this.rotation === 90);
+        connectors[2] = (this.rotation === 90 || this.rotation === 180);
+        connectors[3] = (this.rotation === 180 || this.rotation === 270);
+        return connectors;
+    };
+
+    // TileY
+    // Three connectors
+    // Rotation = 0 if the connector is N+E+W
+    module.TileY = function (x, y, connectors, isPowerPlant) {
+        var i;
+
+        module.Tile.call(this, x, y, isPowerPlant);
+        this.type = module.TileType.Y;
+
+        for (i = 0; i < connectors.length; i += 1) {
+            if (!connectors[i]) {
+                break;
+            }
+        }
+        this.rotation = ((i + 2) % 4) * 90;
+        this.rotationGoal = this.rotation;
+    };
+    module.TileY.prototype = Object.create(_Tile);
+    _TileY = module.TileY.prototype;
+
+    _TileY.connectsWith = function () {
+        if (this.rotation === 0) {
+            return [true, true, false, true];
+        } else if (this.rotation === 90) {
+            return [true, true, true, false];
+        } else if (this.rotation === 180) {
+            return [false, true, true, true];
+        } else if (this.rotation === 270) {
+            return [true, false, true, true];
+        }
+        return [false, false, false, false];
+    };
+
+    // TileX
+    // Three connectors
+    // Rotation = 0, always at the beginning
+    module.TileX = function (x, y, connectors, isPowerPlant) {
+        module.Tile.call(this, x, y, isPowerPlant);
+        this.type = module.TileType.X;
+
+        this.rotation = 0;
+        this.rotationGoal = this.rotation;
+    };
+    module.TileX.prototype = Object.create(_Tile);
+    _TileX = module.TileY.prototype;
+
+    _TileX.connectsWith = function () {
+        if (this.rotation % 90 === 0) {
+            return [true, true, true, true];
+        }
+        return false;
+    };
 
 }(GameLevelState = GameLevelState || {}));

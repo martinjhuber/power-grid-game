@@ -28,7 +28,8 @@ var GameLevelRenderer,
     renderTiles = function (tileGrid) {
         var x, y, tile, connectors,
             tileSize = GameConfig.grid.tileSize,
-            halfTileSize = tileSize / 2;
+            halfTileSize = tileSize / 2,
+            halfPi = Math.PI / 180;
 
         ctx.strokeStyle = GameConfig.style.tileLine;
         ctx.fillStyle = GameConfig.style.tileLine;
@@ -40,34 +41,47 @@ var GameLevelRenderer,
             for (y = 0; y < tileGrid[x].length; y += 1) {
 
                 tile = tileGrid[x][y];
-                connectors = tile.getConnectors();
+
+                ctx.save();
 
                 ctx.beginPath();
+                ctx.translate(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
+                ctx.rotate(tile.rotation * halfPi);
 
-                if (connectors[0]) {
-                    ctx.moveTo(x * tileSize + halfTileSize, y * tileSize);
-                    ctx.lineTo(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
+                if (tile.type === GameLevelState.TileType.Consumer) {
+                    ctx.moveTo(0, -halfTileSize);
+                    ctx.lineTo(0, 0);
+                } else if (tile.type === GameLevelState.TileType.I) {
+                    ctx.moveTo(0, -halfTileSize);
+                    ctx.lineTo(0, halfTileSize);
+                } else if (tile.type === GameLevelState.TileType.L) {
+                    ctx.moveTo(0, -halfTileSize);
+                    ctx.lineTo(0, 0);
+                    ctx.lineTo(halfTileSize, 0);
+                } else if (tile.type === GameLevelState.TileType.Y) {
+                    ctx.moveTo(0, -halfTileSize);
+                    ctx.lineTo(0, 0);
+                    ctx.moveTo(-halfTileSize, 0);
+                    ctx.lineTo(halfTileSize, 0);
+                } else if (tile.type === GameLevelState.TileType.X) {
+                    ctx.moveTo(0, -halfTileSize);
+                    ctx.lineTo(0, halfTileSize);
+                    ctx.moveTo(-halfTileSize, 0);
+                    ctx.lineTo(halfTileSize, 0);
                 }
-                if (connectors[1]) {
-                    ctx.moveTo(x * tileSize + tileSize, y * tileSize + halfTileSize);
-                    ctx.lineTo(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
-                }
-                if (connectors[2]) {
-                    ctx.moveTo(x * tileSize + halfTileSize, y * tileSize + tileSize);
-                    ctx.lineTo(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
-                }
-                if (connectors[3]) {
-                    ctx.moveTo(x * tileSize, y * tileSize + halfTileSize);
-                    ctx.lineTo(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
-                }
+
+                //console.log(tile.type, tile.rotation);
 
                 ctx.stroke();
 
-                if (tile.getType() === GameLevelState.TileType.Consumer) {
-                    ctx.beginPath();
-                    ctx.arc(x * tileSize + halfTileSize, y * tileSize + halfTileSize, halfTileSize / 2, 0, 2 * Math.PI, false);
-                    ctx.fill();
-                }
+//                if (tile.getType() === GameLevelState.TileType.Consumer) {
+//                    ctx.beginPath();
+//                    ctx.arc(x * tileSize + halfTileSize, y * tileSize + halfTileSize, halfTileSize / 2, 0, 2 * Math.PI, false);
+//                    ctx.fill();
+//                }
+
+
+                ctx.restore();
 
             }
 
