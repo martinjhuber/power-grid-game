@@ -1,4 +1,4 @@
-/*** TD Util module - (c) mjh.at - v0.0.1 2016-08-10 ***/
+/*** PowerGridGame - GameUtil module - (c) mjh.at - v0.0.1 ***/
 
 var GameUtil;
 

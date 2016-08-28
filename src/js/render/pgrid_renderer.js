@@ -1,4 +1,4 @@
-/*** TD Renderer module - (c) mjh.at - v0.0.1 2016-08-10 ***/
+/*** PowerGridGame - Renderer module - (c) mjh.at - v0.0.1 ***/
 
 var GameRenderer,
     GameLevelRenderer,

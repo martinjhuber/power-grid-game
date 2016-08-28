@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Power Grid Game</title>
     <script src="./js/pgrid_config.js"></script>
     <script src="./js/pgrid_util.js"></script>
@@ -17,9 +17,12 @@
 </head>
 <body>
 
+<button onclick="stop = !stop;">Stop</button><br/>
 <canvas id="canvas" width="1280" height="720" class="canvas" style="position: absolute; z-index: 0; background-color: #000">
 
 <script>
+var stop = false;
+
 window.onload = function () {
     Game.init();
 };

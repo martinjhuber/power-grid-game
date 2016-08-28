@@ -1,4 +1,4 @@
-/*** TD GameState module - (c) mjh.at - v0.0.1 2016-08-10 ***/
+/*** PowerGridGame - GameState module - (c) mjh.at - v0.0.1 ***/
 
 var GameState,
     GameUtil,

@@ -1,4 +1,4 @@
-/*** TD LevelState module - (c) mjh.at - v0.0.1 2016-08-10 ***/
+/*** PowerGridGame - LevelState module - (c) mjh.at - v0.0.1 ***/
 
 var GameLevelState,
     GameUtil,
@@ -12,47 +12,93 @@ var GameLevelState,
     var _Tile, _Consumer, _TileI, _TileL, _TileY, _TileX,
         countConnectors, tileGenerator;
 
-    module.LevelState = function (width, height, wrap) {
+    module.LevelState = function (gridWidth, gridHeight, wrap) {
 
-        var constructor,
+        var constructor, updateTiles, updateConnectionStatus,
             // variables:
-            grid = null;
+            tileGrid = null, powerPlant = null;
 
         constructor = function () {
-            var levelGenerator;
-            levelGenerator = new module.LevelGenerator(width, height, wrap);
-            grid = levelGenerator.generateTileGrid();
+            var levelGenerator, tileGridResult, x, y;
+            levelGenerator = new module.LevelGenerator(gridWidth, gridHeight, wrap);
+            tileGridResult = levelGenerator.generateTileGrid();
+
+            tileGrid = tileGridResult.grid;
+            powerPlant = tileGridResult.powerPlant;
         };
 
-        this.getGrid = function () {
-            return grid;
+        this.getTileGrid = function () {
+            return tileGrid;
         };
 
         this.isWrap = function () {
             return wrap;
         };
 
+        updateTiles = function (timePassed) {
+            var x, y;
+            for (x = 0; x < gridWidth; x += 1) {
+                for (y = 0; y < gridHeight; y += 1) {
+                    tileGrid[x][y].update(timePassed);
+                    tileGrid[x][y].tileState = module.TileStates.NotConnected;
+                }
+            }
+        };
+
+        updateConnectionStatus = function () {
+            var stack = [powerPlant], currentTile,
+                neighborTiles, connections, neighborTile, n;
+
+            while (stack.length > 0) {
+                currentTile = stack.pop();
+                currentTile.tileState = module.TileStates.Connected;
+                connections = currentTile.connectsWith();
+                neighborTiles = currentTile.neighbors;
+
+                for (n = 0; n < neighborTiles.length; n += 1) {
+                    neighborTile = neighborTiles[n];
+
+                    if (neighborTile !== null &&
+                            neighborTile.tileState !== module.TileStates.Connected &&
+                            connections[n] === true &&
+                            neighborTile.connectsWith()[(n + 2) % 4] === true) {
+
+                        stack.push(neighborTile);
+                    }
+                }
+            }
+        };
+
+        this.update = function (timePassed) {
+            updateTiles(timePassed);
+            updateConnectionStatus();
+        };
+
         constructor();
 
     };
 
+    module.Direction = {
+        N : { i : 0, xdiff : 0, ydiff : -1 },
+        E : { i : 1, xdiff : 1, ydiff : 0 },
+        S : { i : 2, xdiff : 0, ydiff : 1 },
+        W : { i : 3, xdiff : -1, ydiff : 0 }
+    };
+    module.Direction.N.opposite = module.Direction.S;
+    module.Direction.E.opposite = module.Direction.W;
+    module.Direction.S.opposite = module.Direction.N;
+    module.Direction.W.opposite = module.Direction.E;
+
     // ----
 
-    module.LevelGenerator = function (width, height, wrap) {
+    module.LevelGenerator = function (gridWidth, gridHeight, wrap) {
 
         var constructor, generateGridPlanReverseBackTracking, generateGridPlanKruskal,
-            calcNeighbor,
-            getRandomUnvisitedNeighbor, generateTileGridFromPlan;
+            getRandomUnvisitedNeighbor, generateTileGridFromPlan,
+            calcNeighborCell, getNeighborCells;
 
         constructor = function () {
 
-        };
-
-        module.Direction = {
-            N : 0,
-            E : 1,
-            S : 2,
-            W : 3
         };
 
         generateGridPlanKruskal = function () {
@@ -73,8 +119,8 @@ var GameLevelState,
             };
 
             plan = GameUtil.createMatrix(
-                width,
-                height,
+                gridWidth,
+                gridHeight,
                 function (i, j) {
                     return {
                         x : i,
@@ -86,8 +132,8 @@ var GameLevelState,
             );
 
             edges = [];
-            for (i = 0; i < width; i += 1) {
-                for (j = 0; j < height; j += 1) {
+            for (i = 0; i < gridWidth; i += 1) {
+                for (j = 0; j < gridHeight; j += 1) {
                     if (wrap || j > 0) {
                         edges.push({ x : i, y : j, direction : module.Direction.N });
                     }
@@ -102,14 +148,14 @@ var GameLevelState,
             while (edges.length > 0) {
                 edge = edges.pop();
                 cell = plan[edge.x][edge.y];
-                neighbor = calcNeighbor(edge.x, edge.y, edge.direction);
+                neighbor = calcNeighborCell(edge.x, edge.y, edge.direction);
                 neighborCell = plan[neighbor.x][neighbor.y];
 
                 if (!cell.tree.isConnected(neighborCell.tree)) {
                     cell.tree.connect(neighborCell.tree);
 
-                    cell.connectors[edge.direction] = true;
-                    neighborCell.connectors[neighbor.direction] = true;
+                    cell.connectors[edge.direction.i] = true;
+                    neighborCell.connectors[neighbor.direction.opposite.i] = true;
                 }
             }
 
@@ -119,13 +165,13 @@ var GameLevelState,
 
         generateGridPlanReverseBackTracking = function () {
             var plan, stack = [],
-                midX = (width - 1) / 2, midY = (height - 1) / 2,
-                currentCell, unvisitedCells = width * height,
+                midX = (gridWidth - 1) / 2, midY = (gridHeight - 1) / 2,
+                currentCell, unvisitedCells = gridWidth * gridHeight,
                 neighbor, neighborCell;
 
             plan = GameUtil.createMatrix(
-                width,
-                height,
+                gridWidth,
+                gridHeight,
                 function (i, j) {
                     return {
                         x : i,
@@ -153,8 +199,8 @@ var GameLevelState,
                     stack.push(currentCell);
 
                     // 2.1.3
-                    neighborCell.connectors[neighbor.direction] = true;
-                    currentCell.connectors[(neighbor.direction + 2) % 4] = true;
+                    neighborCell.connectors[neighbor.direction.opposite.i] = true;
+                    currentCell.connectors[neighbor.direction.i] = true;
 
                     // 2.1.4
                     currentCell = neighborCell;
@@ -172,50 +218,14 @@ var GameLevelState,
 
         };
 
-        calcNeighbor = function (x, y, direction) {
-            if (direction === module.Direction.N) {
-                y -= 1;
-            } else if (direction === module.Direction.W) {
-                x -= 1;
-            } else if (direction === module.Direction.E) {
-                x += 1;
-            } else if (direction === module.Direction.S) {
-                y += 1;
-            }
-
-            if (x < 0) {
-                x = width - 1;
-            } else if (x >= width) {
-                x = 0;
-            }
-            if (y < 0) {
-                y = height - 1;
-            } else if (y >= height) {
-                y = 0;
-            }
-
-            return { x : x, y : y, direction : (direction + 2) % 4 };
-        };
-
         getRandomUnvisitedNeighbor = function (i, j, plan) {
             var neighbors = [], unvisitedNeighbors = [], a, elem;
 
-            if (j !== 0 || wrap) {
-                neighbors.push(calcNeighbor(i, j, module.Direction.N));
-            }
-            if (i !== width - 1 || wrap) {
-                neighbors.push(calcNeighbor(i, j, module.Direction.E));
-            }
-            if (j !== height - 1 || wrap) {
-                neighbors.push(calcNeighbor(i, j, module.Direction.S));
-            }
-            if (i !== 0 || wrap) {
-                neighbors.push(calcNeighbor(i, j, module.Direction.W));
-            }
+            neighbors = getNeighborCells(i, j);
 
             for (a = 0; a < neighbors.length; a += 1) {
                 elem = neighbors[a];
-                if (!plan[elem.x][elem.y].visited) {
+                if (elem !== null && !plan[elem.x][elem.y].visited) {
                     unvisitedNeighbors.push(elem);
                 }
             }
@@ -231,35 +241,84 @@ var GameLevelState,
         };
 
         generateTileGridFromPlan = function (plan) {
-            var tileGrid, x, y,
-                midX = (width - 1) / 2, midY = (height - 1) / 2;
+            var tileGrid, x, y, n,
+                midX = (gridWidth - 1) / 2, midY = (gridHeight - 1) / 2,
+                neighborCells, neighborCell;
 
-            tileGrid = GameUtil.createMatrix(width, height, null);
+            tileGrid = GameUtil.createMatrix(gridWidth, gridHeight, null);
 
+            // Create tile grid
             for (x = 0; x < plan.length; x += 1) {
                 for (y = 0; y < plan[x].length; y += 1) {
-
                     tileGrid[x][y] = tileGenerator(
                         x,
                         y,
                         plan[x][y].connectors,
                         (x === midX && y === midY)
                     );
-
                 }
             }
 
-            return tileGrid;
+            // Set neighbors of each tile
+            for (x = 0; x < plan.length; x += 1) {
+                for (y = 0; y < plan[x].length; y += 1) {
+                    neighborCells = getNeighborCells(x, y);
+                    for (n = 0; n < neighborCells.length; n += 1) {
+                        neighborCell = neighborCells[n];
+                        if (neighborCell !== null) {
+                            tileGrid[x][y].neighbors[n] =
+                                tileGrid[neighborCell.x][neighborCell.y];
+                        }
+                    }
+                }
+            }
+
+            return { grid : tileGrid, powerPlant : tileGrid[midX][midY] };
         };
 
         this.generateTileGrid = function () {
-            var plan, tileGrid;
+            var plan, tileGridResult;
 
             //plan = generateGridPlanReverseBackTracking();
             plan = generateGridPlanKruskal();
-            tileGrid = generateTileGridFromPlan(plan);
+            tileGridResult = generateTileGridFromPlan(plan);
 
-            return tileGrid;
+            return tileGridResult;
+        };
+
+        calcNeighborCell = function (x, y, direction) {
+            x += direction.xdiff;
+            y += direction.ydiff;
+
+            if (x < 0) {
+                x = gridWidth - 1;
+            } else if (x >= gridWidth) {
+                x = 0;
+            }
+            if (y < 0) {
+                y = gridHeight - 1;
+            } else if (y >= gridHeight) {
+                y = 0;
+            }
+
+            return { x : x, y : y, direction : direction };
+        };
+
+        getNeighborCells = function (x, y) {
+            var neighbors = [null, null, null, null];
+            if (y !== 0 || wrap) {
+                neighbors[0] = calcNeighborCell(x, y, module.Direction.N);
+            }
+            if (x !== gridWidth - 1 || wrap) {
+                neighbors[1] = calcNeighborCell(x, y, module.Direction.E);
+            }
+            if (y !== gridHeight - 1 || wrap) {
+                neighbors[2] = calcNeighborCell(x, y, module.Direction.S);
+            }
+            if (x !== 0 || wrap) {
+                neighbors[3] = calcNeighborCell(x, y, module.Direction.W);
+            }
+            return neighbors;
         };
 
         constructor();
@@ -330,6 +389,8 @@ var GameLevelState,
         this.rotation = 0;
         this.type = null;
         this.isPowerPlant = isPowerPlant;
+        this.tileState = module.TileStates.NotConnected;
+        this.neighbors = [null, null, null, null];
 
         this.rotationGoal = 0;
     };
@@ -340,11 +401,10 @@ var GameLevelState,
 
             // TODO: make rotation dependent on timePassed
             if (this.rotation > this.rotationGoal) {
-                this.rotation -= 0.5;
+                this.rotation -= 1;
             } else {
-                this.rotation += 0.5;
+                this.rotation += 1;
             }
-
         }
     };
 
@@ -358,6 +418,14 @@ var GameLevelState,
 
     _Tile.connectsWith = function () {
         return [false, false, false, false];
+    };
+
+    _Tile.getNormalizedRotation = function () {
+        var rot = this.rotation % 360;
+        if (rot < 0) {
+            rot += 360;
+        }
+        return rot;
     };
 
     // CONSUMER
@@ -377,20 +445,22 @@ var GameLevelState,
         this.rotation = i * 90;
         this.rotationGoal = this.rotation;
 
-        this.state = module.TileStates.NotConnected;
+        this.tileState = module.TileStates.NotConnected;
     };
     module.Consumer.prototype = Object.create(_Tile);
     _Consumer = module.Consumer.prototype;
 
     _Consumer.connectsWith = function () {
-        var connectors = [false, false, false, false];
-        if (this.rotation === 0) {
+        var connectors = [false, false, false, false],
+            rot = this.getNormalizedRotation();
+
+        if (rot === 0) {
             connectors[0] = true;
-        } else if (this.rotation === 90) {
+        } else if (rot === 90) {
             connectors[1] = true;
-        } else if (this.rotation === 180) {
+        } else if (rot === 180) {
             connectors[2] = true;
-        } else if (this.rotation === 270) {
+        } else if (rot === 270) {
             connectors[3] = true;
         }
         return connectors;
@@ -412,10 +482,12 @@ var GameLevelState,
     _TileI = module.TileI.prototype;
 
     _TileI.connectsWith = function () {
-        var connectors = [false, false, false, false];
-        if (this.rotation === 0 || this.rotation === 180) {
+        var connectors = [false, false, false, false],
+            rot180 = this.getNormalizedRotation() % 180;
+
+        if (rot180 === 0) {
             connectors[0] = connectors[2] = true;
-        } else if (this.rotation === 90) {
+        } else if (rot180 === 90) {
             connectors[1] = connectors[3] = true;
         }
         return connectors;
@@ -441,11 +513,12 @@ var GameLevelState,
     _TileL = module.TileL.prototype;
 
     _TileL.connectsWith = function () {
-        var connectors = [false, false, false, false];
-        connectors[0] = (this.rotation === 0 || this.rotation === 270);
-        connectors[1] = (this.rotation === 0 || this.rotation === 90);
-        connectors[2] = (this.rotation === 90 || this.rotation === 180);
-        connectors[3] = (this.rotation === 180 || this.rotation === 270);
+        var connectors = [false, false, false, false],
+            rot = this.getNormalizedRotation();
+        connectors[0] = (rot === 0 || rot === 270);
+        connectors[1] = (rot === 0 || rot === 90);
+        connectors[2] = (rot === 90 || rot === 180);
+        connectors[3] = (rot === 180 || rot === 270);
         return connectors;
     };
 
@@ -470,20 +543,21 @@ var GameLevelState,
     _TileY = module.TileY.prototype;
 
     _TileY.connectsWith = function () {
-        if (this.rotation === 0) {
+        var rot = this.getNormalizedRotation();
+        if (rot === 0) {
             return [true, true, false, true];
-        } else if (this.rotation === 90) {
+        } else if (rot === 90) {
             return [true, true, true, false];
-        } else if (this.rotation === 180) {
+        } else if (rot === 180) {
             return [false, true, true, true];
-        } else if (this.rotation === 270) {
+        } else if (rot === 270) {
             return [true, false, true, true];
         }
         return [false, false, false, false];
     };
 
     // TileX
-    // Three connectors
+    // Four connectors
     // Rotation = 0, always at the beginning
     module.TileX = function (x, y, connectors, isPowerPlant) {
         module.Tile.call(this, x, y, isPowerPlant);
@@ -493,13 +567,14 @@ var GameLevelState,
         this.rotationGoal = this.rotation;
     };
     module.TileX.prototype = Object.create(_Tile);
-    _TileX = module.TileY.prototype;
+    _TileX = module.TileX.prototype;
 
     _TileX.connectsWith = function () {
-        if (this.rotation % 90 === 0) {
+        var rot = this.getNormalizedRotation();
+        if (rot % 90 === 0) {
             return [true, true, true, true];
         }
-        return false;
+        return [false, false, false, false];
     };
 
 }(GameLevelState = GameLevelState || {}));

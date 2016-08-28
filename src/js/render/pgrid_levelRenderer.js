@@ -1,4 +1,4 @@
-/*** TD LevelRenderer module - (c) mjh.at - v0.0.1 2016-08-10 ***/
+/*** PowerGridGame - LevelRenderer module - (c) mjh.at - v0.0.1 ***/
 
 var GameLevelRenderer,
     GameConfig,
@@ -17,21 +17,21 @@ var GameLevelRenderer,
     _LevelRenderer = module.LevelRenderer.prototype;
 
     _LevelRenderer.render = function (levelState) {
-        renderGrid(levelState.getGrid());
+        renderGrid(levelState.getTileGrid());
         renderLevelState(levelState);
     };
 
     renderLevelState = function (levelState) {
-        renderTiles(levelState.getGrid());
+        renderTiles(levelState.getTileGrid());
     };
 
     renderTiles = function (tileGrid) {
         var x, y, tile, connectors,
             tileSize = GameConfig.grid.tileSize,
             halfTileSize = tileSize / 2,
+            qrtTileSize = tileSize / 4,
             halfPi = Math.PI / 180;
 
-        ctx.strokeStyle = GameConfig.style.tileLine;
         ctx.fillStyle = GameConfig.style.tileLine;
         ctx.lineWidth = GameConfig.style.tileLineWidth;
 
@@ -44,9 +44,18 @@ var GameLevelRenderer,
 
                 ctx.save();
 
+                if (tile.tileState === GameLevelState.TileStates.Connected) {
+                    ctx.strokeStyle = GameConfig.style.tileLineConnected;
+                    ctx.fillStyle = GameConfig.style.tileLineConnected;
+
+                } else {
+                    ctx.strokeStyle = GameConfig.style.tileLine;
+                    ctx.fillStyle = GameConfig.style.tileLine;
+                }
+
                 ctx.beginPath();
                 ctx.translate(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
-                ctx.rotate(tile.rotation * halfPi);
+                ctx.rotate(tile.getNormalizedRotation() * halfPi);
 
                 if (tile.type === GameLevelState.TileType.Consumer) {
                     ctx.moveTo(0, -halfTileSize);
@@ -70,23 +79,19 @@ var GameLevelRenderer,
                     ctx.lineTo(halfTileSize, 0);
                 }
 
-                //console.log(tile.type, tile.rotation);
-
                 ctx.stroke();
 
-//                if (tile.getType() === GameLevelState.TileType.Consumer) {
-//                    ctx.beginPath();
-//                    ctx.arc(x * tileSize + halfTileSize, y * tileSize + halfTileSize, halfTileSize / 2, 0, 2 * Math.PI, false);
-//                    ctx.fill();
-//                }
-
+                if (tile.isPowerPlant) {
+                    ctx.fillRect(-qrtTileSize, -qrtTileSize, halfTileSize, halfTileSize);
+                } else if (tile.type === GameLevelState.TileType.Consumer) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, qrtTileSize, 0, 2 * Math.PI, false);
+                    ctx.fill();
+                }
 
                 ctx.restore();
-
             }
-
         }
-
 
     };
 

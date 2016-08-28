@@ -1,4 +1,4 @@
-/*** Vector TD Game module - (c) mjh.at - v0.0.1 2016-08-10 ***/
+/*** PowerGridGame - Game module - (c) mjh.at - v0.0.1 ***/
 
 var Game,
     GameConfig,
@@ -6,7 +6,8 @@ var Game,
     GamePath,
     GameState,
     GameLevelState,
-    GameUtil;
+    GameUtil,
+    stop;   // TODO: remove me
 
 /*jslint devel: true, browser: true, nomen: true*/
 (function (module) {
@@ -37,19 +38,21 @@ var Game,
 
         // TODO: game logic
 
-        // TODO: remove me
-        grid = _gameState.levelState.getGrid();
-        // Rotation logic test
-        if (Math.floor(Math.random() * 10) === 0) {
-            tile = grid[Math.floor(Math.random() * grid.length)][Math.floor(Math.random() * grid[0].length)];
-            tile.rotateRight();
-            //console.log("rotate", tile.x, tile.y);
-        }
-
-        for (x = 0; x < grid.length; x += 1) {
-            for (y = 0; y < grid[0].length; y += 1) {
-                grid[x][y].update(0);
+        if (!stop) {
+            // TODO: remove me
+            grid = _gameState.levelState.getTileGrid();
+            // Rotation logic test
+            if (Math.floor(Math.random() * 40) === 0) {
+                tile = grid[Math.floor(Math.random() * grid.length)][Math.floor(Math.random() * grid[0].length)];
+                if (Math.random() < 0.5) {
+                    tile.rotateRight();
+                } else {
+                    tile.rotateLeft();
+                }
+                //console.log("rotate", tile.x, tile.y);
             }
+
+            _gameState.levelState.update();
         }
 
         // Render game
@@ -70,7 +73,7 @@ var Game,
 
         // TODO: Remove
         _gameState.startLevel();
-        _gameState.levelState = new GameLevelState.LevelState(13, 11, false);
+        _gameState.levelState = new GameLevelState.LevelState(15, 13, true);
 
         // Reset FPS counter every second
         setInterval(updateFps, 1000);
