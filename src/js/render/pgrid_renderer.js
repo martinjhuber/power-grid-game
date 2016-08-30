@@ -14,35 +14,52 @@ var GameRenderer,
         drawFps;
 
     module.Renderer = function () {
-        var canvas = document.getElementById("canvas");
+        var constructor, drawFps, renderState,
+            ctx, levelRenderer;
 
-        ctx = canvas.getContext("2d");
+        constructor = function () {
+            var canvas = document.getElementById("canvas");
 
-        this.levelRenderer = new GameLevelRenderer.LevelRenderer(ctx);
+            ctx = canvas.getContext("2d");
+            levelRenderer = new GameLevelRenderer.LevelRenderer(ctx);
+        };
 
+        drawFps = function () {
+            var fps = Game.getFps();
+
+            ctx.font = "normal 9px 'Lucida Console'";
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#0F0";
+            ctx.fillText(" " + fps, GameConfig.renderer.width - 2, 10);
+        };
+
+
+        renderState = function (timePassed, state) {
+
+            if (state.renderBelow) {
+                renderState(timePassed, state.stateBelow);
+            }
+
+            if (state.stateType === GameState.StateType.Menu) {
+                console.log("No renderer for menu yet");
+            } else if (state.stateType === GameState.StateType.Level) {
+                levelRenderer.render(state.getLevel());
+            }
+
+
+        };
+
+        this.render = function (timePassed, gameState) {
+            var currentState = gameState.getCurrentState();
+
+            ctx.clearRect(0, 0, GameConfig.renderer.width, GameConfig.renderer.height);
+            renderState(timePassed, currentState);
+            drawFps();
+        };
+
+        constructor();
     };
-    _Renderer = module.Renderer.prototype;
 
-    _Renderer.render = function (timePassed, gameState) {
-        var currentState = gameState.getState();
 
-        ctx.clearRect(0, 0, GameConfig.renderer.width, GameConfig.renderer.height);
-
-        if (currentState === GameState.State.GAMEPLAY) {
-            this.levelRenderer.render(gameState.getLevelState());
-        }
-
-        drawFps();
-
-    };
-
-    drawFps = function () {
-        var fps = Game.getFps();
-
-        ctx.font = "normal 9px 'Lucida Console'";
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#0F0";
-        ctx.fillText(" " + fps, GameConfig.renderer.width - 2, 10);
-    };
 
 }(GameRenderer = GameRenderer || {}));

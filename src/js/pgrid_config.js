@@ -19,6 +19,7 @@ var GameConfig = {
         grid : "#666",
         tileLine : "#FFF",
         tileLineConnected : "#0CB",
+        tileLockedOverlay : "rgba(64,64,64,0.5)",
         tileLineWidth : 5
     }
 

@@ -7,22 +7,20 @@
     <script src="./js/pgrid_util.js"></script>
     <script src="./js/render/pgrid_levelRenderer.js"></script>
     <script src="./js/render/pgrid_renderer.js"></script>
+    <script src="./js/pgrid_control.js"></script>
     <script src="./js/pgrid_game.js"></script>
-    <script src="./js/pgrid_levelState.js"></script>
+    <script src="./js/pgrid_level.js"></script>
     <script src="./js/pgrid_gameState.js"></script>
     <!--<link rel="stylesheet" type="text/css" href="css/pgrid.css">-->
     <style>
-        body { background-color: #111; }
+        body { background-color: #111; margin: 0; padding: 0; }
     </style>
 </head>
 <body>
 
-<button onclick="stop = !stop;">Stop</button><br/>
 <canvas id="canvas" width="1280" height="720" class="canvas" style="position: absolute; z-index: 0; background-color: #000">
 
 <script>
-var stop = false;
-
 window.onload = function () {
     Game.init();
 };

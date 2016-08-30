@@ -7,7 +7,7 @@ var Game,
     GameState,
     GameLevelState,
     GameUtil,
-    stop;   // TODO: remove me
+    GameControl;
 
 /*jslint devel: true, browser: true, nomen: true*/
 (function (module) {
@@ -30,30 +30,12 @@ var Game,
 
     gameLoop = function () {
         var now = timestamp(), x, y,
-            timePassed = Math.min(1, now - module.time),
-            grid, // remove me
-            tile; // remove me
+            timePassed = Math.min(1, now - module.time);
 
         window.requestAnimationFrame(gameLoop);
 
-        // TODO: game logic
-
-        if (!stop) {
-            // TODO: remove me
-            grid = _gameState.levelState.getTileGrid();
-            // Rotation logic test
-            if (Math.floor(Math.random() * 40) === 0) {
-                tile = grid[Math.floor(Math.random() * grid.length)][Math.floor(Math.random() * grid[0].length)];
-                if (Math.random() < 0.5) {
-                    tile.rotateRight();
-                } else {
-                    tile.rotateLeft();
-                }
-                //console.log("rotate", tile.x, tile.y);
-            }
-
-            _gameState.levelState.update();
-        }
+        // Update game state
+        _gameState.update(timePassed);
 
         // Render game
         _renderer.render(timePassed, _gameState);
@@ -70,13 +52,14 @@ var Game,
 
         _renderer = new GameRenderer.Renderer();
         _gameState = new GameState.GameState();
+        GameControl.addEventListeners(_gameState);
 
         // TODO: Remove
-        _gameState.startLevel();
-        _gameState.levelState = new GameLevelState.LevelState(15, 13, true);
+        _gameState.startLevel(7, 5, true);
 
         // Reset FPS counter every second
         setInterval(updateFps, 1000);
+
 
         // Start game loop
         module.time = timestamp();
