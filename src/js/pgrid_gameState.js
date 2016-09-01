@@ -3,13 +3,14 @@
 var GameState,
     GameLevel,
     GameControl,
-    GameConfig;
+    GameConfig,
+    GameUtil;
 
 /*jslint devel: true, browser: true, nomen: true*/
 (function (module) {
     "use strict";
 
-    var State, MenuState, LevelState, PopupState,
+    var State, MenuState, LevelState, PopupState, LevelStatistics,
         _State, _MenuState, _LevelState, _PopupState;
 
     module.StateType = {
@@ -107,6 +108,9 @@ var GameState,
 
         this.stateType = module.StateType.Level;
         this.level = new GameLevel.Level(gridWidth, gridHeight, wrap);
+        this.levelStatistics = new LevelStatistics();
+        this.level.registerObserver(this.levelStatistics);
+        this.level.start();
 
         rotateFunc = function (x, y, levelRotateFunc) {
             return function (button) {
@@ -126,11 +130,11 @@ var GameState,
         };
 
         for (x = 0; x < gridWidth; x += 1) {
-            x1 = x * tileSize;
+            x1 = x * tileSize + GameConfig.grid.left;
             x2 = x1 + tileSize;
             xm = x1 + tileSize / 2;
             for (y = 0; y < gridHeight; y += 1) {
-                y1 = y * tileSize;
+                y1 = y * tileSize + GameConfig.grid.top;
                 y2 = y1 + tileSize;
                 this.inputHandler.addClickHandler(x1, y1, xm, y2, rotateFunc(x, y, thiz.level.rotateTileLeft));
                 this.inputHandler.addClickHandler(xm, y1, x2, y2, rotateFunc(x, y, thiz.level.rotateTileRight));
@@ -140,7 +144,7 @@ var GameState,
 
         this.inputHandler.addKeyPressHandler(0, 0, 99999, 99999, function (keyCode) {
             if (keyCode === GameControl.KeyCodes.P) {
-                console.log("pause");
+                this.level.pause();
             }
         });
 
@@ -150,6 +154,10 @@ var GameState,
 
     _LevelState.getLevel = function () {
         return this.level;
+    };
+
+    _LevelState.getLevelStatistics = function () {
+        return this.levelStatistics;
     };
 
     _State.update = function (timePassed) {
@@ -167,6 +175,57 @@ var GameState,
     };
     PopupState.prototype = Object.create(_State);
     _PopupState = PopupState.prototype;
+
+
+    LevelStatistics = function () {
+        var lastRotation = { x : null, y : null}, rotations = 0,
+            timePassed = 0, minimumRotationsRequired = 0,
+            tilesLocked = 0, numConnectedTiles = 0, numTiles = 0;
+
+        this.notify = function (notification, params) {
+            switch (notification) {
+            case GameUtil.Notifications.LevelStarted:
+                minimumRotationsRequired = params.numTilesRandomized;
+                numTiles = params.gridWidth * params.gridHeight;
+                break;
+            case GameUtil.Notifications.LevelPause:
+                break;
+            case GameUtil.Notifications.Update:
+                timePassed += params.timePassed;
+                numConnectedTiles = params.connectedTiles;
+                break;
+            case GameUtil.Notifications.TileRotate:
+                if (params.x !== lastRotation.x || params.y !== lastRotation.y) {
+                    rotations += 1;
+                    lastRotation = params;
+                }
+                break;
+            case GameUtil.Notifications.TileLock:
+                tilesLocked += params.locked ? 1 : -1;
+                break;
+            }
+        };
+
+        this.getTimePassed = function () {
+            return timePassed;
+        };
+
+        this.getMinimumRotationsRequired = function () {
+            return minimumRotationsRequired;
+        };
+
+        this.getRotations = function () {
+            return rotations;
+        };
+
+        this.getNumConnectedTiles = function () {
+            return numConnectedTiles;
+        };
+
+        this.getNumTiles = function () {
+            return numTiles;
+        };
+    };
 
 
 }(GameState = GameState || {}));

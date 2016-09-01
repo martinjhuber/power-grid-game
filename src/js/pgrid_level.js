@@ -16,7 +16,8 @@ var GameLevel,
 
         var constructor, updateTiles, updateConnectionStatus,
             // variables:
-            tileGrid = null, powerPlant = null;
+            tileGrid = null, powerPlant = null, pause = false, numTilesRandomized = 0,
+            observers = new GameUtil.Observers();
 
         constructor = function () {
             var levelGenerator, tileGridResult, x, y;
@@ -25,6 +26,15 @@ var GameLevel,
 
             tileGrid = tileGridResult.grid;
             powerPlant = tileGridResult.powerPlant;
+            numTilesRandomized = tileGridResult.numTilesRotated;
+        };
+
+        this.start = function () {
+            observers.notify(GameUtil.Notifications.LevelStarted, {
+                gridWidth : gridWidth,
+                gridHeight : gridHeight,
+                numTilesRandomized : numTilesRandomized
+            });
         };
 
         this.getTileGrid = function () {
@@ -47,11 +57,13 @@ var GameLevel,
 
         updateConnectionStatus = function () {
             var stack = [powerPlant], currentTile,
-                neighborTiles, connections, neighborTile, n;
+                neighborTiles, connections, neighborTile, n,
+                connectedTiles = 0;
 
             while (stack.length > 0) {
                 currentTile = stack.pop();
                 currentTile.tileState = module.TileStates.Connected;
+                connectedTiles += 1;
                 connections = currentTile.connectsWith();
                 neighborTiles = currentTile.neighbors;
 
@@ -67,24 +79,55 @@ var GameLevel,
                     }
                 }
             }
+
+            return connectedTiles;
         };
 
         this.rotateTileLeft = function (x, y) {
             tileGrid[x][y].rotateLeft();
+            observers.notify(GameUtil.Notifications.TileRotate, {
+                x : x,
+                y : y,
+                direction : -1
+            });
         };
 
         this.rotateTileRight = function (x, y) {
             tileGrid[x][y].rotateRight();
+            observers.notify(GameUtil.Notifications.TileRotate, {
+                x : x,
+                y : y,
+                direction : 1
+            });
         };
 
         this.lock = function (x, y) {
             var tile = tileGrid[x][y];
             tile.locked = !tile.locked;
+            observers.notify(GameUtil.Notifications.TileLock, {
+                x : x,
+                y : y,
+                locked : tile.locked
+            });
+        };
+
+        this.pause = function () {
+            pause = !pause;
+            observers.notify(GameUtil.Notifications.LevelPause, { pause : pause });
         };
 
         this.update = function (timePassed) {
+            var connectedTiles;
             updateTiles(timePassed);
-            updateConnectionStatus();
+            connectedTiles = updateConnectionStatus();
+            observers.notify(GameUtil.Notifications.Update, {
+                timePassed : timePassed,
+                connectedTiles : connectedTiles
+            });
+        };
+
+        this.registerObserver = function (observer) {
+            observers.registerObserver(observer);
         };
 
         constructor();
@@ -286,19 +329,24 @@ var GameLevel,
                 }
             }
 
-            return { grid : tileGrid, powerPlant : tileGrid[midX][midY] };
+            return { grid : tileGrid, powerPlant : tileGrid[midX][midY], numTilesRotated : 0 };
         };
 
         rotateTilesRandomly = function (tileGrid) {
-            var x, y, tile;
+            var x, y, tile, numTilesRotated = 0;
 
             for (x = 0; x < tileGrid.length; x += 1) {
                 for (y = 0; y < tileGrid[x].length; y += 1) {
                     tile = tileGrid[x][y];
                     tile.rotation = Math.floor(Math.random() * 4) * 90;
                     tile.rotationGoal = tile.rotation;
+                    if (!tile.hasCorrectOrientation()) {
+                        numTilesRotated += 1;
+                    }
                 }
             }
+
+            return numTilesRotated;
         };
 
         this.generateTileGrid = function () {
@@ -307,7 +355,7 @@ var GameLevel,
             //plan = generateGridPlanReverseBackTracking();
             plan = generateGridPlanKruskal();
             tileGridResult = generateTileGridFromPlan(plan);
-            rotateTilesRandomly(tileGridResult.grid);
+            tileGridResult.numTilesRotated = rotateTilesRandomly(tileGridResult.grid);
 
             return tileGridResult;
         };
@@ -413,12 +461,13 @@ var GameLevel,
         this.x = x;
         this.y = y;
         this.rotation = 0;
+        this.startRotation = 0;
         this.type = null;
         this.isPowerPlant = isPowerPlant;
         this.tileState = module.TileStates.NotConnected;
         this.neighbors = [null, null, null, null];
-        this.locked = false;
 
+        this.locked = false;
         this.rotationGoal = 0;
     };
     _Tile = module.Tile.prototype;
@@ -462,6 +511,16 @@ var GameLevel,
         return rot;
     };
 
+    _Tile.setRotation = function (rotation) {
+        this.rotation = rotation;
+        this.rotationGoal = rotation;
+        this.startRotation = rotation;
+    };
+
+    _Tile.hasCorrectOrientation = function () {
+        return this.getNormalizedRotation() === this.startRotation;
+    };
+
     // CONSUMER
     // Just one connector
     // Rotation = 0 if the connector is N
@@ -476,8 +535,7 @@ var GameLevel,
                 break;
             }
         }
-        this.rotation = i * 90;
-        this.rotationGoal = this.rotation;
+        this.setRotation(i * 90);
 
         this.tileState = module.TileStates.NotConnected;
     };
@@ -508,9 +566,8 @@ var GameLevel,
         this.type = module.TileType.I;
 
         if (connectors[1]) {
-            this.rotation = 90;
+            this.setRotation(90);
         }
-        this.rotationGoal = this.rotation;
     };
     module.TileI.prototype = Object.create(_Tile);
     _TileI = module.TileI.prototype;
@@ -527,6 +584,10 @@ var GameLevel,
         return connectors;
     };
 
+    _TileI.hasCorrectOrientation = function () {
+        return (this.getNormalizedRotation() % 180) === this.startRotation;
+    };
+
     // TileL
     // Two connectors in an L shape
     // Rotation = 0 if the connector is N+E
@@ -535,13 +596,12 @@ var GameLevel,
         this.type = module.TileType.L;
 
         if (connectors[1] && connectors[2]) {
-            this.rotation = 90;
+            this.setRotation(90);
         } else if (connectors[2] && connectors[3]) {
-            this.rotation = 180;
+            this.setRotation(180);
         } else if (connectors[3] && connectors[0]) {
-            this.rotation = 270;
+            this.setRotation(270);
         }
-        this.rotationGoal = this.rotation;
     };
     module.TileL.prototype = Object.create(_Tile);
     _TileL = module.TileL.prototype;
@@ -570,8 +630,7 @@ var GameLevel,
                 break;
             }
         }
-        this.rotation = ((i + 2) % 4) * 90;
-        this.rotationGoal = this.rotation;
+        this.setRotation(((i + 2) % 4) * 90);
     };
     module.TileY.prototype = Object.create(_Tile);
     _TileY = module.TileY.prototype;
@@ -596,9 +655,6 @@ var GameLevel,
     module.TileX = function (x, y, connectors, isPowerPlant) {
         module.Tile.call(this, x, y, isPowerPlant);
         this.type = module.TileType.X;
-
-        this.rotation = 0;
-        this.rotationGoal = this.rotation;
     };
     module.TileX.prototype = Object.create(_Tile);
     _TileX = module.TileX.prototype;
@@ -609,6 +665,10 @@ var GameLevel,
             return [true, true, true, true];
         }
         return [false, false, false, false];
+    };
+
+    _TileX.hasCorrectOrientation = function () {
+        return true;
     };
 
 }(GameLevel = GameLevel || {}));

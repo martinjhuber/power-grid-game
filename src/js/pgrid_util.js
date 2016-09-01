@@ -37,4 +37,27 @@ var GameUtil;
         }
     };
 
+    module.Observers = function () {
+        var observers = [];
+
+        this.registerObserver = function (observer) {
+            observers.push(observer);
+        };
+
+        this.notify = function (notification, params) {
+            var i;
+            for (i = 0; i < observers.length; i += 1) {
+                observers[i].notify(notification, params);
+            }
+        };
+    };
+
+    module.Notifications = {
+        LevelStarted : 1,
+        LevelPause: 2,
+        Update : 10,
+        TileRotate : 11,
+        TileLock : 12
+    };
+
 }(GameUtil = GameUtil || {}));

@@ -9,14 +9,16 @@ var GameLevelRenderer,
     "use strict";
 
     var _LevelRenderer, ctx,
-        renderLevelState, renderTiles, renderEnemyPaths, renderGrid;
+        renderLevelState, renderTiles, renderEnemyPaths, renderGrid, renderLevelStatistics;
 
     module.LevelRenderer = function (canvasContext) {
         ctx = canvasContext;
     };
     _LevelRenderer = module.LevelRenderer.prototype;
 
-    _LevelRenderer.render = function (level) {
+    _LevelRenderer.render = function (levelState) {
+        var level = levelState.getLevel();
+        renderLevelStatistics(levelState.getLevelStatistics());
         renderGrid(level.getTileGrid());
         renderLevelState(level);
     };
@@ -54,7 +56,10 @@ var GameLevelRenderer,
                 }
 
                 ctx.beginPath();
-                ctx.translate(x * tileSize + halfTileSize, y * tileSize + halfTileSize);
+                ctx.translate(
+                    GameConfig.grid.left + x * tileSize + halfTileSize,
+                    GameConfig.grid.top + y * tileSize + halfTileSize
+                );
                 ctx.rotate(tile.getNormalizedRotation() * halfPi);
 
                 if (tile.type === GameLevel.TileType.Consumer) {
@@ -92,8 +97,11 @@ var GameLevelRenderer,
                 ctx.restore();
 
                 if (tile.locked) {
+                    ctx.save();
+                    ctx.translate(GameConfig.grid.left, GameConfig.grid.top);
                     ctx.fillStyle = GameConfig.style.tileLockedOverlay;
                     ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    ctx.restore();
                 }
 
             }
@@ -101,6 +109,20 @@ var GameLevelRenderer,
 
     };
 
+    renderLevelStatistics = function (stat) {
+
+        ctx.save();
+        ctx.font = GameConfig.style.statisticsFont;
+        ctx.fillStyle = GameConfig.style.statisticsColor;
+        ctx.textAlign = "left";
+
+        ctx.fillText("Rotations: " + stat.getRotations(), 10, 20);
+        ctx.fillText("Min Rotations: " + stat.getMinimumRotationsRequired(), 10, 40);
+        ctx.fillText("Time: " + Math.floor(stat.getTimePassed()), 10, 60);
+        ctx.fillText("Connected tiles: " + stat.getNumConnectedTiles() +
+                     "/" + stat.getNumTiles(), 10, 80);
+        ctx.restore();
+    };
 
     renderGrid = function (tileGrid) {
         var i, j;
@@ -108,7 +130,9 @@ var GameLevelRenderer,
         ctx.strokeStyle = GameConfig.style.grid;
         ctx.lineWidth = 1;
 
+        ctx.save();
         ctx.beginPath();
+        ctx.translate(GameConfig.grid.left, GameConfig.grid.top);
 
         for (i = 0; i < tileGrid.length; i += 1) {
             ctx.moveTo(i * GameConfig.grid.tileSize, 0);
@@ -121,6 +145,7 @@ var GameLevelRenderer,
         }
 
         ctx.stroke();
+        ctx.restore();
     };
 
 

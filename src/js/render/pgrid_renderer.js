@@ -27,12 +27,14 @@ var GameRenderer,
         drawFps = function () {
             var fps = Game.getFps();
 
+            ctx.save();
             ctx.font = "normal 9px 'Lucida Console'";
             ctx.textAlign = "right";
             ctx.fillStyle = "#0F0";
             ctx.fillText(" " + fps, GameConfig.renderer.width - 2, 10);
-        };
+            ctx.restore();
 
+        };
 
         renderState = function (timePassed, state) {
 
@@ -43,7 +45,7 @@ var GameRenderer,
             if (state.stateType === GameState.StateType.Menu) {
                 console.log("No renderer for menu yet");
             } else if (state.stateType === GameState.StateType.Level) {
-                levelRenderer.render(state.getLevel());
+                levelRenderer.render(state);
             }
 
 
