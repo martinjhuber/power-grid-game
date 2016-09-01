@@ -21,7 +21,8 @@ var GameState,
 
     module.GameState = function () {
 
-        var constructor, thiz = this, stateStack = [];
+        var constructor, thiz = this, stateStack = [],
+            mouseLastPosition = [0, 0];
 
         constructor = function () {
             stateStack = [new MenuState(thiz)];
@@ -48,11 +49,20 @@ var GameState,
         };
 
         this.click = function (button, x, y) {
-            this.getCurrentState().clickHandler.click(button, x, y);
+            this.getCurrentState().inputHandler.click(button, x, y);
         };
 
         this.keyPress = function (key) {
-            this.getCurrentState().clickHandler.keyPress(key);
+            this.getCurrentState().inputHandler.keyPress(
+                key,
+                mouseLastPosition[0],
+                mouseLastPosition[1]
+            );
+        };
+
+        this.mouseOver = function (x, y) {
+            mouseLastPosition = [x, y];
+            this.getCurrentState().inputHandler.mouseOver(x, y);
         };
 
         constructor();
@@ -63,7 +73,7 @@ var GameState,
     State = function (gameState) {
         this.stateType = null;
         this.gameState = gameState;
-        this.clickHandler = new GameControl.ClickHandler();
+        this.inputHandler = new GameControl.InputHandler();
 
         this.renderBelow = false;
         this.stateBelow = gameState.getCurrentState();
@@ -90,50 +100,49 @@ var GameState,
 
     LevelState = function (gameState, gridWidth, gridHeight, wrap) {
         var x, y, tileSize = GameConfig.grid.tileSize,
-            thiz = this, rotateLeftFunc, rotateRightFunc;
+            thiz = this, rotateFunc, tileKeyPressFunc,
+            x1, xm, x2, y1, y2;
 
         State.call(this, gameState);
 
         this.stateType = module.StateType.Level;
         this.level = new GameLevel.Level(gridWidth, gridHeight, wrap);
 
-        rotateLeftFunc = function (x, y) {
+        rotateFunc = function (x, y, levelRotateFunc) {
             return function (button) {
-                if (button === GameControl.ClickButtons.Left) {
-                    thiz.level.rotateTileLeft(x, y);
+                if (button === GameControl.MouseButtons.Left) {
+                    levelRotateFunc(x, y);
                 } else {
                     thiz.level.lock(x, y);
                 }
             };
         };
-        rotateRightFunc = function (x, y) {
-            return function (button) {
-                if (button === GameControl.ClickButtons.Left) {
-                    thiz.level.rotateTileRight(x, y);
-                } else {
+        tileKeyPressFunc = function (x, y) {
+            return function (keyCode) {
+                if (keyCode === GameControl.KeyCodes.Space || keyCode === GameControl.KeyCodes.L) {
                     thiz.level.lock(x, y);
                 }
             };
         };
 
         for (x = 0; x < gridWidth; x += 1) {
+            x1 = x * tileSize;
+            x2 = x1 + tileSize;
+            xm = x1 + tileSize / 2;
             for (y = 0; y < gridHeight; y += 1) {
-                this.clickHandler.addClickHandler(
-                    x * tileSize,
-                    y * tileSize,
-                    x * tileSize + tileSize / 2,
-                    y * tileSize + tileSize,
-                    rotateLeftFunc(x, y)
-                );
-                this.clickHandler.addClickHandler(
-                    x * tileSize + tileSize / 2,
-                    y * tileSize,
-                    x * tileSize + tileSize,
-                    y * tileSize + tileSize,
-                    rotateRightFunc(x, y)
-                );
+                y1 = y * tileSize;
+                y2 = y1 + tileSize;
+                this.inputHandler.addClickHandler(x1, y1, xm, y2, rotateFunc(x, y, thiz.level.rotateTileLeft));
+                this.inputHandler.addClickHandler(xm, y1, x2, y2, rotateFunc(x, y, thiz.level.rotateTileRight));
+                this.inputHandler.addKeyPressHandler(x1, y1, x2, y2, tileKeyPressFunc(x, y));
             }
         }
+
+        this.inputHandler.addKeyPressHandler(0, 0, 99999, 99999, function (keyCode) {
+            if (keyCode === GameControl.KeyCodes.P) {
+                console.log("pause");
+            }
+        });
 
     };
     LevelState.prototype = Object.create(_State);

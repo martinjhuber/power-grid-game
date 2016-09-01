@@ -10,8 +10,7 @@ var GameConfig = {
 
     grid : {
         tileSize : 40,
-        tilesX : 13,
-        tilesY : 11,
+        rotatePerSec : 360,
         debug : false
     },
 

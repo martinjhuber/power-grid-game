@@ -424,13 +424,16 @@ var GameLevel,
     _Tile = module.Tile.prototype;
 
     _Tile.update = function (timePassed) {
-        if (this.rotation !== this.rotationGoal) {
+        var degrees, diff;
 
-            // TODO: make rotation dependent on timePassed
+        if (this.rotation !== this.rotationGoal) {
+            diff = Math.abs(this.rotationGoal - this.rotation);
+            degrees = Math.min(GameConfig.grid.rotatePerSec * timePassed, diff);
+
             if (this.rotation > this.rotationGoal) {
-                this.rotation -= 1;
+                this.rotation -= degrees;
             } else {
-                this.rotation += 1;
+                this.rotation += degrees;
             }
         }
     };

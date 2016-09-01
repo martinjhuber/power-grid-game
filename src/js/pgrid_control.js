@@ -6,14 +6,20 @@ var GameControl;
 (function (module) {
     "use strict";
 
-    module.ClickButtons = {
+    module.MouseButtons = {
         Left : 1,
         Right : 2
     };
 
-    module.ClickHandler = function () {
+    module.KeyCodes = {
+        Space : 32,
+        L : 76,
+        P : 80
+    };
 
-        var constructor, isInClickArea,
+    module.InputHandler = function () {
+
+        var constructor, isInArea,
             clickAreas = [],
             keyHandlers = [];
 
@@ -21,9 +27,9 @@ var GameControl;
 
         };
 
-        isInClickArea = function (clickArea, x, y) {
-            return (x >= clickArea.x1 && x < clickArea.x2 &&
-                    y >= clickArea.y1 && y < clickArea.y2);
+        isInArea = function (area, x, y) {
+            return (x >= area.x1 && x < area.x2 &&
+                    y >= area.y1 && y < area.y2);
         };
 
         this.click = function (button, x, y) {
@@ -31,38 +37,32 @@ var GameControl;
 
             for (i = 0; i < clickAreas.length; i += 1) {
                 area = clickAreas[i];
-
-                if (isInClickArea(area, x, y)) {
+                if (isInArea(area, x, y)) {
                     area.func(button);
                 }
             }
         };
 
-        this.keyPress = function (key) {
+        this.keyPress = function (keyCode, x, y) {
             var i, area;
 
             for (i = 0; i < keyHandlers.length; i += 1) {
-                if (keyHandlers[i].key === key) {
-                    keyHandlers[i].func();
+                area = keyHandlers[i];
+                if (isInArea(area, x, y)) {
+                    area.func(keyCode);
                 }
             }
         };
 
-        this.addClickHandler = function (x1, y1, x2, y2, func) {
-            clickAreas.push({
-                x1 : x1,
-                y1 : y1,
-                x2 : x2,
-                y2 : y2,
-                func : func
-            });
+        this.mouseOver = function (x, y) {
         };
 
-        this.addKeyPressHandler = function (key, func) {
-            keyHandlers.push({
-                key : key,
-                func : func
-            });
+        this.addClickHandler = function (x1, y1, x2, y2, func) {
+            clickAreas.push({ x1 : x1, y1 : y1, x2 : x2, y2 : y2, func : func });
+        };
+
+        this.addKeyPressHandler = function (x1, y1, x2, y2, func) {
+            keyHandlers.push({ x1 : x1, y1 : y1, x2 : x2, y2 : y2, func : func });
         };
 
         constructor();
@@ -75,7 +75,7 @@ var GameControl;
             'click',
             function (event) {
                 gameState.click(
-                    GameControl.ClickButtons.Left,
+                    GameControl.MouseButtons.Left,
                     event.pageX - this.offsetLeft,
                     event.pageY - this.offsetTop
                 );
@@ -86,11 +86,31 @@ var GameControl;
             'contextmenu',
             function (event) {
                 gameState.click(
-                    GameControl.ClickButtons.Right,
+                    GameControl.MouseButtons.Right,
                     event.pageX - this.offsetLeft,
                     event.pageY - this.offsetTop
                 );
                 event.preventDefault();
+            },
+            false
+        );
+        canvas.addEventListener(
+            'mousemove',
+            function (event) {
+                gameState.mouseOver(
+                    event.pageX - this.offsetLeft,
+                    event.pageY - this.offsetTop
+                );
+            },
+            false
+        );
+
+        document.getElementsByTagName("body")[0].addEventListener(
+            'keydown',
+            function (event) {
+                var keyCode = (event.keyCode || event.which);
+                gameState.keyPress(keyCode);
+                //event.preventDefault();
             },
             false
         );
