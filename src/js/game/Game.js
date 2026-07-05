@@ -82,12 +82,7 @@ export class Game {
 
     this.#tileSize = dimensions.tileSize;
     this.#renderer.resize(dimensions.canvasWidth, dimensions.canvasHeight);
-    this.#layout = this.#renderer.computeLayout(
-      this.#level,
-      this.#tileSize,
-      dimensions.canvasWidth,
-      dimensions.canvasHeight,
-    );
+    this.#layout = this.#renderer.computeLayout(this.#level, this.#tileSize);
     this.#input?.updateLayout(this.#layout);
     this.#renderer.markDirty();
   }

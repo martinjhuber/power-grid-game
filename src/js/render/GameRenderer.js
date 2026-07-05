@@ -27,13 +27,11 @@ export class GameRenderer {
     this.#dirty = true;
   }
 
-  computeLayout(level, tileSize, canvasWidth, canvasHeight) {
+  computeLayout(level, tileSize) {
     return this.#boardRenderer.computeLayout(
       level.gridWidth,
       level.gridHeight,
       tileSize,
-      canvasWidth ?? this.#cssWidth,
-      canvasHeight ?? this.#cssHeight,
     );
   }
 

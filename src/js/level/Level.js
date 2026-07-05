@@ -12,6 +12,7 @@ export class LevelStatistics {
   #timePassed = 0;
   #numConnectedTiles = 0;
   #numTiles = 0;
+  #wrap = false;
   #lastRotation = { x: null, y: null };
 
   onNotify(event, params) {
@@ -19,6 +20,7 @@ export class LevelStatistics {
       case Events.LevelStarted:
         this.#minimumRotationsRequired = params.numTilesRandomized;
         this.#numTiles = params.gridWidth * params.gridHeight;
+        this.#wrap = params.wrap;
         break;
       case Events.LevelPause:
         break;
@@ -55,6 +57,10 @@ export class LevelStatistics {
 
   get numTiles() {
     return this.#numTiles;
+  }
+
+  get wrap() {
+    return this.#wrap;
   }
 }
 
@@ -136,6 +142,7 @@ export class Level {
       gridWidth: this.#gridWidth,
       gridHeight: this.#gridHeight,
       numTilesRandomized: this.#numTilesRandomized,
+      wrap: this.#wrap,
     });
   }
 

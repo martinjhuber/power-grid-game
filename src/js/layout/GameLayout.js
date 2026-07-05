@@ -13,17 +13,22 @@ export function measureMaxBoardHeight(hudElement) {
 
 export function computeGameDimensions(gridWidth, gridHeight, columnWidth, maxBoardHeight, isMobile) {
   const minSize = isMobile ? CONFIG.grid.tileSizeMobileMin : CONFIG.grid.tileSizeMin;
+  const borderFactor = 2 / 5;
 
-  let tileSize = columnWidth / gridWidth;
+  let tileSize = columnWidth / (gridWidth + borderFactor);
 
-  if (gridHeight * tileSize > maxBoardHeight) {
-    tileSize = maxBoardHeight / gridHeight;
+  if ((gridHeight + borderFactor) * tileSize > maxBoardHeight) {
+    tileSize = maxBoardHeight / (gridHeight + borderFactor);
   }
 
   tileSize = Math.max(minSize, tileSize);
+  tileSize = Math.round(tileSize);
 
-  const canvasWidth = gridWidth * tileSize;
-  const canvasHeight = gridHeight * tileSize;
+  const borderWidth = Math.max(1, Math.round(tileSize / 5));
+  const boardWidth = gridWidth * tileSize;
+  const boardHeight = gridHeight * tileSize;
+  const canvasWidth = boardWidth + 2 * borderWidth;
+  const canvasHeight = boardHeight + 2 * borderWidth;
 
   return { tileSize, canvasWidth, canvasHeight };
 }

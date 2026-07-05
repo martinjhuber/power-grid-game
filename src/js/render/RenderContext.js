@@ -25,8 +25,8 @@ export class RenderContext {
   }
 
   resize(cssWidth, cssHeight) {
-    this.#cssWidth = cssWidth;
-    this.#cssHeight = cssHeight;
+    this.#cssWidth = Math.round(cssWidth);
+    this.#cssHeight = Math.round(cssHeight);
     this.#resize();
     this.#ctx = this.#canvas.getContext('2d');
     this.#ctx.setTransform(this.#dpr, 0, 0, this.#dpr, 0, 0);

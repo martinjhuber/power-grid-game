@@ -16,10 +16,15 @@ export const CONFIG = {
     grid: '#666',
     tile: '#FFF',
     connected: '#0CB',
-    locked: 'rgba(64,64,64,0.5)',
+    lockedBackground: '#303030',
     tileLineWidth: 4,
     background: '#000',
+    pageBackground: '#111',
     pauseOverlay: 'rgba(0,0,0,0.45)',
+    borderInner: '#666',
+    wrapPreviewAlpha: 0.45,
+    powerPlantBolt: '#000',
+    consumerHouse: '#000',
   },
   canvas: {
     minWidth: 640,
@@ -29,6 +34,8 @@ export const CONFIG = {
   score: {
     scale: 90,
     sizeExponent: 2,
-    secondsPerTile: 2.5,
+    secondsPerTile: 2.25,
+    wrapModeMultiplier: 1,
+    flatModeMultiplier: 2 / 3,
   },
 };
