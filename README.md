@@ -13,16 +13,20 @@ cd src
 npx serve .
 ```
 
-Then open the URL shown in the terminal (e.g. http://localhost:3000).
+Then open the URL shown in the terminal (e.g. [http://localhost:3000](http://localhost:3000)).
 
 ## Controls
 
-| Action | Desktop | Mobile |
-|--------|---------|--------|
-| Rotate left | Click left half of tile | — |
-| Rotate right | Click right half of tile | Tap tile |
-| Lock/unlock | Right-click or Space/L | Long-press |
-| Pause | P or HUD button | HUD button |
+
+| Action       | Desktop                  | Mobile     |
+| ------------ | ------------------------ | ---------- |
+| Rotate left  | Click left half of tile  | —          |
+| Rotate right | Click right half of tile | Tap tile   |
+| Lock/unlock  | Right-click or Space/L   | Long-press |
+| Pause        | P or HUD button          | HUD button |
+
+
+
 
 ## Project structure
 
@@ -30,3 +34,12 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 - `src/js/level/` — grid generation, tiles, power flow
 - `src/js/render/` — HiDPI canvas rendering with sprite cache
 - `src/js/verification/` — anti-cheat session log + replay verifier (for future online highscores)
+
+## Development
+
+The original version of this game was implemented by hand in 2016. The current source code is a full rewrite and extension of that prototype, built with **agentic coding** — an AI coding assistant in [Cursor](https://cursor.com) helped design, implement, and refine the codebase from the initial concept.
+
+## License
+
+[MIT](LICENSE) — Copyright (c) 2016-2026 martinjhuber
+
