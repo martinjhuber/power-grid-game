@@ -9,6 +9,8 @@ export class InputHandler {
   #longPressTimer = null;
   #longPressTriggered = false;
   #activePointerId = null;
+  #lastPointer = null;
+  #boundKeyDown = null;
 
   constructor(canvas, level, layout, onChange) {
     this.#canvas = canvas;
@@ -25,15 +27,42 @@ export class InputHandler {
   #bindEvents() {
     this.#canvas.addEventListener('pointerdown', (e) => this.#onPointerDown(e));
     this.#canvas.addEventListener('pointerup', (e) => this.#onPointerUp(e));
+    this.#canvas.addEventListener('pointermove', (e) => this.#trackPointer(e));
     this.#canvas.addEventListener('pointercancel', (e) => this.#clearLongPress(e));
     this.#canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'KeyP') {
-        this.#level.togglePause();
-        this.#onChange?.();
-      }
-    });
+    this.#boundKeyDown = (e) => this.#onKeyDown(e);
+    document.addEventListener('keydown', this.#boundKeyDown);
+  }
+
+  #onKeyDown(event) {
+    if (event.code === 'KeyP') {
+      this.#level.togglePause();
+      this.#onChange?.();
+      return;
+    }
+
+    if (event.code !== 'KeyL' && event.code !== 'Space') {
+      return;
+    }
+
+    if (this.#level.won || this.#level.pause || !this.#lastPointer) {
+      return;
+    }
+
+    const cell = this.#tileAt(this.#lastPointer.x, this.#lastPointer.y);
+    if (!cell) {
+      return;
+    }
+
+    event.preventDefault();
+    this.#level.toggleLock(cell.x, cell.y);
+    this.#onChange?.();
+  }
+
+  #trackPointer(event) {
+    const coords = this.#canvasCoords(event);
+    this.#lastPointer = coords;
   }
 
   #canvasCoords(event) {
@@ -69,6 +98,7 @@ export class InputHandler {
     this.#longPressTriggered = false;
 
     const coords = this.#canvasCoords(event);
+    this.#lastPointer = coords;
     const cell = this.#tileAt(coords.x, coords.y);
     if (!cell) {
       return;
@@ -134,5 +164,6 @@ export class InputHandler {
 
   destroy() {
     this.#clearLongPress();
+    document.removeEventListener('keydown', this.#boundKeyDown);
   }
 }

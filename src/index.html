@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,27 +11,27 @@
     <section id="setup-screen" class="screen">
       <div class="panel setup-panel">
         <h1>Power Grid</h1>
-        <p class="subtitle">Drehe die Leitungen, bis alle Felder Strom haben.</p>
+        <p class="subtitle">Rotate lines until every cell has power.</p>
         <div id="setup-form">
           <fieldset class="size-fieldset">
-            <legend>Breite</legend>
-            <div class="toggle-group" id="width-options" role="radiogroup" aria-label="Breite"></div>
+            <legend>Width</legend>
+            <div class="toggle-group" id="width-options" role="radiogroup" aria-label="Width"></div>
           </fieldset>
           <fieldset class="size-fieldset">
-            <legend>Höhe</legend>
-            <div class="toggle-group" id="height-options" role="radiogroup" aria-label="Höhe"></div>
+            <legend>Height</legend>
+            <div class="toggle-group" id="height-options" role="radiogroup" aria-label="Height"></div>
           </fieldset>
           <fieldset class="size-fieldset">
-            <legend>Wrap-Modus</legend>
-            <div class="toggle-group" role="radiogroup" aria-label="Wrap-Modus">
+            <legend>Wrap mode</legend>
+            <div class="toggle-group" role="radiogroup" aria-label="Wrap mode">
               <input id="wrap-off" name="wrap" type="radio" value="off" checked>
-              <label for="wrap-off">Aus</label>
+              <label for="wrap-off">Off</label>
               <input id="wrap-on" name="wrap" type="radio" value="on">
-              <label for="wrap-on">An</label>
+              <label for="wrap-on">On</label>
             </div>
           </fieldset>
           <p id="setup-error" class="error" hidden></p>
-          <button id="start-btn" type="button" class="btn primary">Spiel starten</button>
+          <button id="start-btn" type="button" class="btn primary">Start game</button>
         </div>
       </div>
     </section>
@@ -40,32 +40,32 @@
       <div id="game-column" class="game-column">
         <div id="hud" class="hud">
           <div class="hud-left">
-            <span class="hud-stat"><span class="hud-label">Rotationen</span><strong id="hud-rotations" class="hud-value hud-value--rotations">0</strong></span>
-            <span class="hud-stat"><span class="hud-label">Minimum</span><strong id="hud-min-rotations" class="hud-value hud-value--min">0</strong></span>
+            <span class="hud-stat"><span class="hud-label">Turns</span><strong id="hud-rotations" class="hud-value hud-value--rotations">0</strong></span>
+            <span class="hud-stat"><span class="hud-label">Par</span><strong id="hud-min-rotations" class="hud-value hud-value--min">0</strong></span>
           </div>
           <div class="hud-center">
-            <span class="hud-stat"><span class="hud-label">Zeit</span><span class="hud-value-wrap"><strong id="hud-time" class="hud-value hud-value--time">0</strong>s</span></span>
-            <span class="hud-stat"><span class="hud-label">Verbunden</span><strong id="hud-connected" class="hud-value hud-value--connected">0/0</strong></span>
+            <span class="hud-stat"><span class="hud-label">Time</span><span class="hud-value-wrap"><strong id="hud-time" class="hud-value hud-value--time">0</strong>s</span></span>
+            <span class="hud-stat"><span class="hud-label">Linked</span><strong id="hud-connected" class="hud-value hud-value--connected">0/0</strong></span>
           </div>
           <div class="hud-actions">
             <button id="hud-pause" type="button" class="btn btn--hud">Pause</button>
-            <button id="hud-cancel" type="button" class="btn btn--hud">Abbrechen</button>
+            <button id="hud-cancel" type="button" class="btn btn--hud">Quit</button>
           </div>
         </div>
         <div class="canvas-wrap">
           <canvas id="game-canvas"></canvas>
           <div id="win-overlay" class="win-overlay" hidden>
             <div class="win-card panel">
-              <h2>Alle Kacheln verbunden!</h2>
-              <p class="win-score">Punkte: <strong id="win-score">0</strong></p>
+              <h2>All cells connected!</h2>
+              <p class="win-score">Score: <strong id="win-score">0</strong></p>
               <ul class="win-stats">
-                <li>Zeit: <strong id="win-time">0</strong>s</li>
-                <li>Rotationen: <strong id="win-rotations">0</strong></li>
-                <li>Min. Rotationen: <strong id="win-min-rotations">0</strong></li>
+                <li>Time: <strong id="win-time">0</strong>s</li>
+                <li>Turns: <strong id="win-rotations">0</strong></li>
+                <li>Par: <strong id="win-min-rotations">0</strong></li>
               </ul>
               <div class="win-actions">
-                <button id="win-replay" type="button" class="btn primary">Nochmal</button>
-                <button id="win-new-game" type="button" class="btn">Neues Spiel</button>
+                <button id="win-replay" type="button" class="btn primary">Retry</button>
+                <button id="win-new-game" type="button" class="btn">New game</button>
               </div>
             </div>
           </div>

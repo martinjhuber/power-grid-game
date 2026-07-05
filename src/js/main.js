@@ -60,7 +60,7 @@ function startGame(game) {
   } catch (error) {
     console.error(error);
     showSetup();
-    setupError.textContent = 'Spiel konnte nicht gestartet werden. Bitte Seite neu laden.';
+    setupError.textContent = 'Could not start the game. Please reload the page.';
     setupError.hidden = false;
   }
 }

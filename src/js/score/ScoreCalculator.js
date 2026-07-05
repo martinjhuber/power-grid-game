@@ -27,5 +27,5 @@ export function calculateScore(statistics, scoreConfig = CONFIG.score) {
 }
 
 export function formatScore(score) {
-  return score.toLocaleString('de-DE');
+  return score.toLocaleString('en-US');
 }
