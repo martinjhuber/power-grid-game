@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { Game } from './game/Game.js';
+import { APP_VERSION } from './version.js';
 
 function $(id) {
   return document.getElementById(id);
@@ -94,5 +95,7 @@ buildSizeOptions('height-options', 'height', CONFIG.grid.defaultHeight);
 const game = new Game(gameCanvas, gameColumn, hud, winOverlay, showSetup);
 
 $('start-btn').addEventListener('click', () => startGame(game));
+
+$('app-version').textContent = `Version ${APP_VERSION}`;
 
 showSetup();

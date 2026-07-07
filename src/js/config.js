@@ -32,9 +32,8 @@ export const CONFIG = {
     hudHeight: 48,
   },
   score: {
-    scale: 90,
-    sizeExponent: 2,
-    secondsPerTile: 2.25,
+    scale: 10000,
+    sizeExponent: 1.5,
     wrapModeMultiplier: 1,
     flatModeMultiplier: 2 / 3,
   },

@@ -50,6 +50,13 @@ body {
   color: #aaa;
 }
 
+.app-version {
+  margin: 16px 0 0;
+  font-size: 0.75rem;
+  color: #666;
+  text-align: center;
+}
+
 .field-row {
   display: flex;
   align-items: center;
