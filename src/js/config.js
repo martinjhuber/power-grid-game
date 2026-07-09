@@ -33,7 +33,7 @@ export const CONFIG = {
   },
   score: {
     scale: 10000,
-    sizeExponent: 1.5,
+    sizeExponent: 1,
     wrapModeMultiplier: 1,
     flatModeMultiplier: 2 / 3,
   },
