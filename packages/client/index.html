@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Power Grid Game</title>
+  <link rel="stylesheet" href="./css/styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "@power-grid/shared/": "/shared/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <section id="setup-screen" class="screen">
+      <div class="panel setup-panel">
+        <h1>Power Grid Game</h1>
+        <p class="subtitle">Rotate lines until every cell has power.</p>
+        <div id="setup-form">
+          <fieldset class="size-fieldset">
+            <legend>Width</legend>
+            <div class="toggle-group" id="width-options" role="radiogroup" aria-label="Width"></div>
+          </fieldset>
+          <fieldset class="size-fieldset">
+            <legend>Height</legend>
+            <div class="toggle-group" id="height-options" role="radiogroup" aria-label="Height"></div>
+          </fieldset>
+          <fieldset class="size-fieldset">
+            <legend>Wrap mode</legend>
+            <div class="toggle-group" role="radiogroup" aria-label="Wrap mode">
+              <input id="wrap-off" name="wrap" type="radio" value="off" checked>
+              <label for="wrap-off">Off</label>
+              <input id="wrap-on" name="wrap" type="radio" value="on">
+              <label for="wrap-on">On</label>
+            </div>
+          </fieldset>
+          <p id="setup-error" class="error" hidden></p>
+          <button id="start-btn" type="button" class="btn primary">Start game</button>
+          <div class="setup-actions">
+            <button id="leaderboard-btn" type="button" class="btn">Leaderboard</button>
+            <button id="help-btn" type="button" class="btn">Help</button>
+          </div>
+          <p id="app-version" class="app-version"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen" hidden>
+      <div id="game-column" class="game-column">
+        <div id="hud" class="hud">
+          <div class="hud-left">
+            <span class="hud-stat"><span class="hud-label">Turns</span><strong id="hud-rotations" class="hud-value hud-value--rotations">0</strong></span>
+            <span class="hud-stat"><span class="hud-label">Par</span><strong id="hud-min-rotations" class="hud-value hud-value--min">0</strong></span>
+          </div>
+          <div class="hud-center">
+            <span class="hud-stat"><span class="hud-label">Time</span><span class="hud-value-wrap"><strong id="hud-time" class="hud-value hud-value--time">0</strong>s</span></span>
+            <span class="hud-stat"><span class="hud-label">Linked</span><strong id="hud-connected" class="hud-value hud-value--connected">0/0</strong></span>
+          </div>
+          <div class="hud-actions">
+            <button id="hud-pause" type="button" class="btn btn--hud">Pause</button>
+            <button id="hud-cancel" type="button" class="btn btn--hud">Quit</button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="game-canvas"></canvas>
+          <div id="win-overlay" class="win-overlay" hidden>
+            <div class="win-card panel">
+              <h2>All cells connected!</h2>
+              <p class="win-score">
+                <span id="win-rank-prefix" hidden>Rank: <strong id="win-rank">—</strong> · </span>Score: <strong id="win-score">0</strong>
+              </p>
+              <ul class="win-stats">
+                <li>Time: <strong id="win-time">0</strong>s</li>
+                <li>Turns: <strong id="win-rotations">0</strong></li>
+                <li>Par: <strong id="win-min-rotations">0</strong></li>
+              </ul>
+              <p id="win-leaderboard-notice" class="win-notice" hidden>This run used pause and is not eligible for the leaderboard.</p>
+              <p id="win-success-notice" class="win-notice win-notice--success" hidden></p>
+              <div class="win-actions">
+                <button id="win-replay" type="button" class="btn primary">Retry</button>
+                <button id="win-leaderboard" type="button" class="btn">Leaderboard</button>
+                <button id="win-new-game" type="button" class="btn">New game</button>
+              </div>
+            </div>
+          </div>
+          <div id="name-dialog" class="win-overlay name-dialog" hidden>
+            <div class="win-card panel">
+              <h2>You are in the Top 100!</h2>
+              <p class="win-score">Rank: <strong id="name-dialog-rank">—</strong> · Score: <strong id="name-dialog-score">—</strong></p>
+              <p class="win-notice">Enter a name for the leaderboard, or skip to appear as Anonymous.</p>
+              <input id="name-dialog-input" class="name-dialog-input" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Your name">
+              <p id="name-dialog-error" class="error" hidden></p>
+              <div class="win-actions">
+                <button id="name-dialog-submit" type="button" class="btn primary">Save name</button>
+                <button id="name-dialog-skip" type="button" class="btn">Skip</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="help-overlay" class="help-overlay" hidden>
+      <div class="help-card panel">
+        <div class="help-header">
+          <h2>How to play</h2>
+          <button id="help-close" type="button" class="btn btn--hud">Close</button>
+        </div>
+        <p class="help-intro">Rotate power lines until every cell is connected to the central plant.</p>
+        <p class="help-intro">Wrap mode links opposite board edges.</p>
+        <h3 class="help-subtitle">Controls</h3>
+        <table class="help-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Desktop</th>
+              <th>Mobile</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Rotate left</td>
+              <td>Click left half</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Rotate right</td>
+              <td>Click right half</td>
+              <td>Tap tile</td>
+            </tr>
+            <tr>
+              <td>Lock / unlock</td>
+              <td>Right-click, Space, or L</td>
+              <td>Long-press</td>
+            </tr>
+            <tr>
+              <td>Pause</td>
+              <td>P or HUD button</td>
+              <td>HUD button</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="help-note">Note: Pause disqualifies a run from the leaderboard.</p>
+      </div>
+    </div>
+
+    <div id="leaderboard-overlay" class="leaderboard-overlay" hidden>
+      <div class="leaderboard-card panel">
+        <div class="leaderboard-header">
+          <h2>Leaderboard</h2>
+          <button id="leaderboard-close" type="button" class="btn btn--hud">Close</button>
+        </div>
+        <p id="leaderboard-status" class="leaderboard-status" hidden></p>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Score</th>
+                <th>Date</th>
+                <th>Name</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

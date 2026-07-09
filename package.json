@@ -1,0 +1,12 @@
+{
+  "name": "power-grid-game",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @power-grid/server",
+    "start": "npm run start -w @power-grid/server",
+    "db:up": "docker compose up -d postgres"
+  }
+}
